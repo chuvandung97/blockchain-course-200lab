@@ -1,12 +1,14 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Gold } from "../../typechain";
+import { Gold } from "../../typechain/Gold";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
+import { Signer } from "ethers";
 
 describe("GOLD", function () {
     let accountA: SignerWithAddress
     let accountB: SignerWithAddress
     let accountC: SignerWithAddress
+
     let token: Gold
     let amount = ethers.utils.parseUnits("100", "ether")
     let address0 = "0x0000000000000000000000000000000000000000"

@@ -24,9 +24,11 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 
 const config: HardhatUserConfig = {
     solidity: "0.8.4",
-    defaultNetwork: "testnet",
     networks: {
-        ropsten: {
+        localhost: {
+            url: "http://127.0.0.1:8545"
+        },
+        rinkeby: {
             url: process.env.ROPSTEN_URL || "",
             accounts:
                 process.env.PRIVATE_KEY !== undefined ? [process.env.PRIVATE_KEY] : [],
@@ -34,13 +36,13 @@ const config: HardhatUserConfig = {
         testnet: {
             url: process.env.BSC_TESTNET_URL || "",
             chainId: process.env.BSC_TESTNET_CHAIN_ID !== undefined ? +process.env.BSC_TESTNET_CHAIN_ID : 0,
-            gasPrice: 20000000000,
+            gasPrice: "auto",
             accounts: process.env.PRIVATE_KEY_TESTNET !== undefined ? [process.env.PRIVATE_KEY_TESTNET] : [],
         },
         mainnet: {
             url: process.env.BSC_MAINNET_URL || "",
             chainId: process.env.BSC_MAINNET_CHAIN_ID !== undefined ? +process.env.BSC_MAINNET_CHAIN_ID : 0,
-            gasPrice: 20000000000,
+            gasPrice: "auto",
             accounts: process.env.PRIVATE_KEY_MAINNET !== undefined ? [process.env.PRIVATE_KEY_MAINNET] : [],
         }
     },
