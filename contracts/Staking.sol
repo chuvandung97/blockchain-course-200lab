@@ -64,6 +64,8 @@ contract Staking is Ownable {
         uint256 lockTime_
     ) public onlyOwner {
         require(rate_ > 0, "Invalid package rate");
+        require(minStaking_ > 0, "Invalid min staking");
+        require(lockTime_ > 0, "Invalid lock time");
         uint256 _packageId = _stakePackageCount.current();
         stakePackages[_packageId] = StakePackage(
             rate_,
@@ -92,6 +94,7 @@ contract Staking is Ownable {
      * otherwise just add completely new stake. 
      */
     function stake(uint256 amount_, uint256 packageId_) external {
+        require(stakePackages[packageId_].isOffline, "Package is offiline");
         require(_msgSender() != address(0), "Sender must not be zero address.");
         require(gold.allowance(_msgSender(), address(this)) >= amount_, "Insufficient balance.");
         require(amount_ >= stakePackages[packageId_].minStaking, "Amount must be greater than min staking.");
@@ -100,21 +103,29 @@ contract Staking is Ownable {
 
         if(stakes[_msgSender()][packageId_].amount > 0) {
             stakes[_msgSender()][packageId_].amount.add(amount_);
+            stakes[_msgSender()][packageId_].timePoint = block.timestamp;
             stakes[_msgSender()][packageId_].totalProfit = calculateProfit(packageId_);
         } else {
             stakes[_msgSender()][packageId_] = StakingInfo(
                 block.timestamp,
-                block.timestamp + stakePackages[packageId_].lockTime,
+                block.timestamp,
                 amount_,
-                calculateProfit(packageId_)
+                0
             );   
         } 
+        emit StakeUpdate(
+            _msgSender(), 
+            packageId_, 
+            stakes[_msgSender()][packageId_].amount, 
+            stakes[_msgSender()][packageId_].totalProfit
+        );
     }
     /**
      * @dev Take out all the stake amount and profit of account's stake from reserve contract
      */
-    function unStake(uint256 packageId_) external {
-        // validate available package and approved amount
+    function unStake(uint256 packageId_) external checkExistsStakePackage(packageId_) {
+
+        reserve.distributeGold(_msgSender(), stakes[_msgSender()][packageId_].amount + calculateProfit(packageId_));
     }
     /**
      * @dev calculate current profit of an package of user known packageId
@@ -124,12 +135,12 @@ contract Staking is Ownable {
         public
         view
         checkExistsStakePackage(packageId_) returns (uint256)
-    {
-        if(stakes[_msgSender()][packageId_].amount > 0) {
-
-        } else {
-            return stakePackages[packageId_].lockTime.mul(getAprOfPackage(packageId_).div(365)).mul(stakes[_msgSender()][packageId_].amount.div(100));
-        }
+    { 
+        return (block.timestamp - stakes[_msgSender()][packageId_].timePoint)
+            .mul(stakes[_msgSender()][packageId_].amount)
+            .mul(getAprOfPackage(packageId_))
+            .div(100)
+            .div(365);
     }
 
     function getAprOfPackage(uint256 packageId_)
