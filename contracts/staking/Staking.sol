@@ -105,9 +105,10 @@ contract Staking is Ownable {
         StakingInfo storage _stakeInfo = stakes[_msgSender()][packageId_];
 
         if(_stakeInfo.amount > 0) {
+            uint256 _totalProfit = calculateProfit(packageId_);
             _stakeInfo.amount += amount_;
             _stakeInfo.timePoint = block.timestamp;
-            _stakeInfo.totalProfit = calculateProfit(packageId_);
+            _stakeInfo.totalProfit = _totalProfit;
         } else {
             _stakeInfo.startTime = block.timestamp;
             _stakeInfo.timePoint = block.timestamp;
