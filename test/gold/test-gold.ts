@@ -1,8 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Gold } from "../../typechain/Gold";
+import { Gold } from "../../typechain";
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
-import { Signer } from "ethers";
 
 describe("GOLD", function () {
     let accountA: SignerWithAddress

@@ -10,8 +10,11 @@ contract StakingReserve is Ownable {
     IERC20 public mainToken;
     address public stakeAddress;
 
-    constructor(address _mainToken, address _stakeAddress) {
+    constructor(address _mainToken) {
         mainToken = IERC20(_mainToken);
+    }
+
+    function setStakeAddress(address _stakeAddress) external onlyOwner {
         stakeAddress = _stakeAddress;
     }
 
@@ -20,7 +23,11 @@ contract StakingReserve is Ownable {
     }
 
     function distributeGold(address _recipient, uint256 _amount) public {
-        require(msg.sender == stakeAddress);
+        require(_msgSender() == stakeAddress);
+        require(
+            _amount <= getBalanceOfReserve(),
+            "StakingReserve: Not enough token"
+        );
         mainToken.transfer(_recipient, _amount);
     }
 }
