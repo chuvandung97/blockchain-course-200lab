@@ -100,12 +100,12 @@ contract Staking is Ownable {
         require(gold.allowance(_msgSender(), address(this)) >= amount_, "Insufficient balance.");
         require(amount_ >= stakePackages[packageId_].minStaking, "Amount must be greater than min staking.");
 
-        gold.transferFrom(_msgSender(), address(this), amount_);
+        gold.transferFrom(_msgSender(), address(reserve), amount_);
 
         StakingInfo storage _stakeInfo = stakes[_msgSender()][packageId_];
 
         if(_stakeInfo.amount > 0) {
-            _stakeInfo.amount.add(amount_);
+            _stakeInfo.amount += amount_;
             _stakeInfo.timePoint = block.timestamp;
             _stakeInfo.totalProfit = calculateProfit(packageId_);
         } else {
@@ -126,7 +126,7 @@ contract Staking is Ownable {
      */
     function unStake(uint256 packageId_) external checkExistsStakePackage(packageId_) {
         StakingInfo storage _stakeInfo = stakes[_msgSender()][packageId_];
-        require(block.timestamp - _stakeInfo.timePoint > stakePackages[packageId_].lockTime, "It's not time to unstake");
+        require(block.timestamp - _stakeInfo.timePoint >= stakePackages[packageId_].lockTime, "It's not time to unstake");
 
         uint256 _totalProfit = calculateProfit(packageId_);
         uint256 _amount = _stakeInfo.amount;
@@ -155,11 +155,12 @@ contract Staking is Ownable {
     { 
         StakingInfo memory _stakeInfo = stakes[_msgSender()][packageId_];
         StakePackage memory _stakePackage = stakePackages[packageId_];
-
-        return _stakeInfo.totalProfit + 
-            (block.timestamp - _stakeInfo.timePoint / 86400)
-            .mul(_stakeInfo.amount)
-            .mul(_stakePackage.rate / (365 * 10 ** (_stakePackage.decimal + 2)));
+    
+        return _stakeInfo.totalProfit + (
+            (_stakeInfo.amount * _stakePackage.rate) * ((block.timestamp - _stakeInfo.timePoint) / 86400)
+            / 10 ** (_stakePackage.decimal + 2)
+            / 365
+        );
     }
 
     function getAprOfPackage(uint256 packageId_)
